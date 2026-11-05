@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+def appVersion = new Properties()
+rootProject.file('version.properties').withInputStream { appVersion.load(it) }
+def releaseRepo = providers.environmentVariable('RELEASE_REPOSITORY').getOrElse('')
+if (releaseRepo && !(releaseRepo ==~ /[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/)) {
+    throw new GradleException('RELEASE_REPOSITORY must be owner/repo')
+}
+def signingReady = providers.environmentVariable('ANDROID_KEYSTORE_PATH').isPresent()
+android {
+    namespace 'com.pharmnote.study'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.pharmnote.study'
+        minSdk 26
+        targetSdk 35
+        versionCode appVersion.VERSION_CODE.toInteger()
+        versionName appVersion.VERSION_NAME
+        buildConfigField 'String', 'RELEASE_REPOSITORY', '"' + releaseRepo + '"'
+    }
+    buildFeatures { buildConfig true }
+    signingConfigs {
+        if (signingReady) {
+            release {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storePassword System.getenv('ANDROID_STORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.debug'; versionNameSuffix '-debug' }
+        release {
+            minifyEnabled false
+            if (signingReady) { signingConfig signingConfigs.release }
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
