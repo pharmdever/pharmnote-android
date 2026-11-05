@@ -27,32 +27,17 @@ PDF และสรุปเก็บในเครื่อง ไม่มี
 
 ## ตั้งค่ารุ่นใช้งานจริงและ signing key ถาวร (ครั้งเดียว)
 
-รุ่น release ใช้ package `com.pharmnote.study` และต้องใช้ signing key เดิมตลอด ถ้าเปลี่ยน key จะติดตั้งทับรุ่นเก่าไม่ได้
+รุ่น release ใช้ package `com.pharmnote.study` และ signing key ถาวรที่มีลายนิ้วมือใน `signing-certificate.sha256` สคริปต์ตรวจใบรับรองก่อน build เพื่อป้องกันเปลี่ยน key โดยไม่ตั้งใจ เก็บ key สำรองไว้ส่วนตัว ห้ามอัปโหลด key หรือ bundle เข้า repo
 
-สร้าง key บนคอมพิวเตอร์ของคุณด้วย JDK (โปรแกรมจะถามรหัสผ่าน):
+1. เปิดไฟล์ **ANDROID_SIGNING_BUNDLE.txt** จาก ZIP สำรองส่วนตัวที่เตรียมให้ คัดลอกข้อความทั้งหมด
+2. ไป Repo > Settings > Secrets and variables > Actions > New repository secret
+3. ตั้งชื่อ **ANDROID_SIGNING_BUNDLE** วางข้อความเป็นค่า แล้วกด Add secret
+4. ไป Actions > **Publish signed APK** > Run workflow > เลือก main > Run workflow
+5. เมื่อผ่าน ไป Releases > v0.1.0 แล้วดาวน์โหลด **Pharmnote.apk** เพื่อติดตั้ง
 
-```sh
-keytool -genkeypair -keystore pharmnote-release.jks -alias pharmnote -keyalg RSA -keysize 3072 -validity 10000
-```
+ตั้งค่า Secret ครั้งเดียว ทุกรุ่นถัดไปใช้ Secret เดิม ZIP สำรองรวม key และรหัสผ่าน ผู้ที่มีไฟล์นี้สามารถลงนามแอปได้ จึงต้องเก็บเป็นส่วนตัว อย่าส่งค่า Secret ใน issue, chat หรือ commit
 
-เก็บไฟล์ key และรหัสผ่านสำรองไว้ในที่ส่วนตัว ห้าม commit เข้า repo และห้ามโพสต์ key ใน issues/chat ที่เปิดเผย
-
-สร้างข้อความ base64 ในเครื่อง แล้วคัดลอกเข้า GitHub Secret:
-
-```sh
-python -c "import base64,pathlib; pathlib.Path('pharmnote.base64.txt').write_text(base64.b64encode(pathlib.Path('pharmnote-release.jks').read_bytes()).decode())"
-```
-
-Repo > Settings > Secrets and variables > Actions > New repository secret:
-
-| Secret | ค่า |
-| --- | --- |
-| `ANDROID_KEYSTORE_BASE64` | ข้อความจาก pharmnote.base64.txt |
-| `ANDROID_STORE_PASSWORD` | รหัสผ่าน keystore |
-| `ANDROID_KEY_ALIAS` | pharmnote |
-| `ANDROID_KEY_PASSWORD` | รหัสผ่าน key (มักเหมือน store password) |
-
-ลบไฟล์ base64 ในเครื่องหลังตั้ง secret และสำรอง key จริงไว้ ถ้า GitHub จำกัด Actions ให้เปิดใช้งานก่อน Workflow ออก release ใช้ GITHUB_TOKEN ของงานเพื่อเขียน Releases
+รุ่น release แยกจาก debug APK ที่แจกก่อนหน้า ใช้รุ่น release เป็นแอปหลัก ข้อมูลของ debug จะไม่ย้ายมาอัตโนมัติ ทุกรุ่น release ถัดไปที่ใช้ key เดิมและ versionCode สูงกว่าจะติดตั้งทับโดยเก็บข้อมูลเดิม
 
 ## ออกรุ่นใหม่และอัปเดต
 
@@ -84,8 +69,8 @@ git push origin v0.2.0
 gradle :app:assembleDebug
 ```
 
-รุ่น release ต้องตั้ง environment variables ตาม `app/build.gradle`: ANDROID_KEYSTORE_PATH, ANDROID_STORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD และ RELEASE_REPOSITORY=owner/repo
+รุ่น release ต้องตั้ง environment variables ตาม `app/build.gradle`: ANDROID_KEYSTORE_PATH, ANDROID_STORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD และ RELEASE_REPOSITORY=owner/repo (GitHub workflow ตั้งค่าให้จาก Secret เดียว)
 
 ## สถานะการตรวจสอบ
 
-ตรวจ XML, รูปแบบ workflow YAML, Python release metadata และความสอดคล้องเลขเวอร์ชันแล้ว สภาพแวดล้อมที่เตรียมโปรเจกต์ไม่มี Android SDK/Gradle/JDK compiler จึงยังไม่ได้ compile, ทดสอบ emulator หรือสร้าง APK จริง Workflow ต้องรันบน GitHub และผ่านก่อนดาวน์โหลด APK ได้
+Debug APK คอมไพล์และ build ผ่านบน GitHub Actions แล้ว ตรวจ XML, workflow YAML และ metadata แล้ว ส่วน permanent signing มีการตรวจ key และการปฏิเสธ key ที่ลายนิ้วมือไม่ตรง ยังไม่ได้ทดสอบแอปบนมือถือจริง Release แรกต้องตั้ง Secret และรัน workflow ให้ผ่านก่อนดาวน์โหลด

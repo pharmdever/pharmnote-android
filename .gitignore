@@ -7,3 +7,5 @@ local.properties
 .env
 *.base64.txt
 release/
+*SIGNING_BUNDLE*
+*signing-backup*
