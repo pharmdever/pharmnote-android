@@ -24,7 +24,7 @@ jobs:
           if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', p['VERSION_NAME']):
               raise SystemExit('VERSION_NAME must be major.minor.patch')
           tag = 'v' + p['VERSION_NAME']
-          if os.environ['GITHUB_EVENT_NAME'] == 'push' and os.environ['GITHUB_REF_NAME'] != tag:
+          if os.environ.get('GITHUB_REF_TYPE') == 'tag' and os.environ['GITHUB_REF_NAME'] != tag:
               raise SystemExit('Tag must match VERSION_NAME')
           if int(p['VERSION_CODE']) < 1:
               raise SystemExit('VERSION_CODE must be positive')
