@@ -19,7 +19,7 @@ final class SummaryHeadings {
    StringBuilder title=new StringBuilder();heading.accept(new AbstractVisitor(){public void visit(Text text){title.append(text.getLiteral());}public void visit(Code code){title.append(code.getLiteral());}public void visit(SoftLineBreak n){title.append(' ');}public void visit(HardLineBreak n){title.append(' ');}});
    while(!parents.isEmpty()&&parents.get(parents.size()-1).level>=heading.getLevel())parents.remove(parents.size()-1);
    String context=parents.isEmpty()?(entries.isEmpty()?"หัวข้อแรก":"ก่อนหน้า: "+entries.get(entries.size()-1).title):parents.get(parents.size()-1).title;
-   String text=title.toString().trim();Entry entry=new Entry(entries.size(),heading.getLevel(),text.isEmpty()?"หัวข้อไม่มีชื่อ":text,context);entries.add(entry);parents.add(entry);
+   String text=SemanticHighlights.plainLabels(title.toString().trim());Entry entry=new Entry(entries.size(),heading.getLevel(),text.isEmpty()?"หัวข้อไม่มีชื่อ":text,context);entries.add(entry);parents.add(entry);
   }});
   return entries;
  }
