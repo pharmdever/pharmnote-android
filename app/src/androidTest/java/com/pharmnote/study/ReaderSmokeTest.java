@@ -30,7 +30,7 @@ public class ReaderSmokeTest {
   try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
    scenario.onActivity(a->{try{a.open(LibraryStore.find(a,ID),0);}catch(Exception e){throw new AssertionError(e);}});
    AtomicBoolean ready=new AtomicBoolean();for(int i=0;i<100;i++){scenario.onActivity(a->ready.set(a.pdfView!=null&&a.pdfView.count()==1&&a.zoomLabel.getText().toString().equals("100%")));if(ready.get())break;SystemClock.sleep(150);}assertTrue("PDF did not become ready",ready.get());SystemClock.sleep(1200);
-   AtomicReference<ZoomPdfView> view=new AtomicReference<>();scenario.onActivity(a->view.set(a.pdfView));pinch(view.get());SystemClock.sleep(1500);scenario.onActivity(a->{int percent=Integer.parseInt(a.zoomLabel.getText().toString().replace("%",""));assertTrue("Pinch did not zoom",percent>150);a.pdfView.zoom(1.1f);});SystemClock.sleep(800);screenshot("qa-reader.png");
+   AtomicReference<ZoomPdfView> view=new AtomicReference<>();scenario.onActivity(a->view.set(a.pdfView));pinch(view.get());SystemClock.sleep(1500);screenshot("qa-reader.png");scenario.onActivity(a->{int percent=Integer.parseInt(a.zoomLabel.getText().toString().replace("%",""));assertTrue("Pinch did not zoom",percent>150);a.pdfView.zoom(1.1f);});SystemClock.sleep(800);screenshot("qa-reader.png");
    scenario.onActivity(a->a.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE));SystemClock.sleep(1800);scenario.onActivity(a->assertTrue("Landscape should maximize PDF",a.readerFullscreen));screenshot("qa-landscape.png");
   }
   Intent intent=new Intent(context,StudyActivity.class).putExtra("document",ID).putExtra("mode","regimen");
@@ -39,10 +39,11 @@ public class ReaderSmokeTest {
  void screenshot(String name)throws Exception{Bitmap b=InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();assertNotNull(b);try(OutputStream out=new FileOutputStream(new File(context.getFilesDir(),name))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();}
  void pinch(View view){
   int[] loc=new int[2];view.getLocationOnScreen(loc);float cx=loc[0]+view.getWidth()/2f,cy=loc[1]+view.getHeight()/2f;
+  float start=view.getWidth()*.10f,end=view.getWidth()*.40f;
   long down=SystemClock.uptimeMillis();MotionEvent.PointerProperties[] props=new MotionEvent.PointerProperties[2];for(int i=0;i<2;i++){props[i]=new MotionEvent.PointerProperties();props[i].id=i;props[i].toolType=MotionEvent.TOOL_TYPE_FINGER;}
-  send(down,MotionEvent.ACTION_DOWN,1,props,cx,cy,35);send(down,MotionEvent.ACTION_POINTER_DOWN|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,cx,cy,35);
-  for(int i=0;i<15;i++){send(down,MotionEvent.ACTION_MOVE,2,props,cx,cy,35+i*8);SystemClock.sleep(25);}
-  send(down,MotionEvent.ACTION_POINTER_UP|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,cx,cy,147);send(down,MotionEvent.ACTION_UP,1,props,cx,cy,147);
+  send(down,MotionEvent.ACTION_DOWN,1,props,cx,cy,start);send(down,MotionEvent.ACTION_POINTER_DOWN|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,cx,cy,start);
+  for(int i=0;i<15;i++){send(down,MotionEvent.ACTION_MOVE,2,props,cx,cy,start+(end-start)*i/14);SystemClock.sleep(25);}
+  send(down,MotionEvent.ACTION_POINTER_UP|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,cx,cy,end);send(down,MotionEvent.ACTION_UP,1,props,cx,cy,end);
  }
  void send(long down,int action,int count,MotionEvent.PointerProperties[] props,float x,float y,float distance){MotionEvent.PointerCoords[] coords=new MotionEvent.PointerCoords[count];for(int i=0;i<count;i++){coords[i]=new MotionEvent.PointerCoords();coords[i].x=x+(i==0?-distance:distance);coords[i].y=y;coords[i].pressure=1;coords[i].size=1;}MotionEvent e=MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,count,props,coords,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);InstrumentationRegistry.getInstrumentation().getUiAutomation().injectInputEvent(e,true);e.recycle();}
 }
