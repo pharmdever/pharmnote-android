@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 /** Small, density-independent interface icons drawn from paths; no font glyph icons. */
 final class CodeIcon extends Drawable {
- enum Kind {BACK,MORE,READ,EDIT,COPY,PASTE,IMPORT,EXPORT,INFO,AI,SEND,SAVE,PLUS,MINUS,STAR,FIT,FULLSCREEN,ROTATE,DELETE,UPDATE,SETTINGS,DOWN,RIGHT,FONT_SMALL,FONT_LARGE}
+ enum Kind {BACK,MORE,READ,EDIT,COPY,PASTE,IMPORT,EXPORT,INFO,AI,SEND,SAVE,PLUS,MINUS,STAR,FIT,FULLSCREEN,ROTATE,DELETE,UPDATE,SETTINGS,DOWN,RIGHT,FONT_SMALL,FONT_LARGE,CONTENTS}
  private final Kind kind;private int color;private boolean filled;
  private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
  CodeIcon(Kind kind,int color){this.kind=kind;this.color=color;}
@@ -39,6 +39,7 @@ final class CodeIcon extends Drawable {
    case DELETE:path(c,4,6,20,6);path(c,8,6,8,3,16,3,16,6);path(c,6,6,7,21,17,21,18,6);line(c,10,10,10,17);line(c,14,10,14,17);break;
    case UPDATE:c.drawArc(4,4,20,20,40,280,false,p);path(c,16,3,21,5,18,10);break;
    case SETTINGS:c.drawCircle(12,12,4,p);for(int i=0;i<8;i++){double a=i*Math.PI/4;line(c,12+(float)Math.cos(a)*8,12+(float)Math.sin(a)*8,12+(float)Math.cos(a)*10,12+(float)Math.sin(a)*10);}c.drawCircle(12,12,8,p);break;
+   case CONTENTS:for(int y=6;y<=18;y+=6){p.setStyle(Paint.Style.FILL);c.drawCircle(4,y,1.2f,p);p.setStyle(Paint.Style.STROKE);line(c,8,y,21,y);}break;
    case FONT_SMALL:case FONT_LARGE:path(c,3,19,9,5,15,19);line(c,6,13,12,13);line(c,17,12,23,12);if(kind==Kind.FONT_LARGE)line(c,20,9,20,15);break;
   }c.restore();
  }
