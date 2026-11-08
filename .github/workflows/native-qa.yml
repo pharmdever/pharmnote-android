@@ -32,14 +32,11 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: gradle --no-daemon :app:testDebugUnitTest :app:connectedDebugAndroidTest
+          script: bash scripts/run-native-qa.sh
       - name: Collect native screenshots
         if: always()
         run: |
           mkdir -p native-qa
-          for name in qa-reader.png qa-landscape.png qa-summary.png; do
-            adb exec-out run-as com.pharmnote.study.debug cat "files/$name" > "native-qa/$name" || true
-          done
           python3 - <<'PY'
           import base64
           from pathlib import Path
