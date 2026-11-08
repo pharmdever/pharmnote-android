@@ -36,13 +36,13 @@ public class MainActivity extends Activity {
  TextView text(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,dp(5),0,dp(5));return t;}
  GradientDrawable shape(int color){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(14));return d;}
  Button button(String title,Runnable action){
-  Button b=new Button(this);b.setText(title);b.setTextSize(14);b.setAllCaps(false);b.setTextColor(GREEN);
+  Button b=new Button(this);b.setText(CodeIcon.label(title));b.setContentDescription(title);b.setTextSize(14);b.setAllCaps(false);b.setTextColor(GREEN);
   b.setTypeface(null,1);b.setMinWidth(0);b.setMinimumWidth(0);b.setMinHeight(dp(48));b.setMinimumHeight(dp(48));
   b.setPadding(dp(14),dp(8),dp(14),dp(8));b.setElevation(0);b.setStateListAnimator(null);
   GradientDrawable bg=shape(Color.rgb(236,242,232));bg.setStroke(dp(1),Color.rgb(221,230,216));
-  b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x18315C4D),bg,null));b.setOnClickListener(v->action.run());return b;
+  b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x18315C4D),bg,null));CodeIcon.Kind icon=CodeIcon.fromLabel(title);if(icon!=null){CodeIcon.attach(b,icon,GREEN,dp(18));if(title.equals("★"))((CodeIcon)b.getCompoundDrawables()[0]).filled(true);}b.setOnClickListener(v->action.run());return b;
  }
- Button primary(String label,Runnable action){Button b=button(label,action);b.setTextColor(Color.WHITE);b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x30FFFFFF),shape(GREEN),null));return b;}
+ Button primary(String label,Runnable action){Button b=button(label,action);b.setTextColor(Color.WHITE);CodeIcon.tint(b,Color.WHITE);b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x30FFFFFF),shape(GREEN),null));return b;}
  void gap(LinearLayout parent,int h){View v=new View(this);parent.addView(v,new LinearLayout.LayoutParams(1,dp(h)));}
  TextView pill(String label){TextView t=text(label,12,GREEN);t.setPadding(dp(10),dp(5),dp(10),dp(5));t.setBackground(shape(Color.rgb(235,241,228)));return t;}
  void fieldStyle(EditText e){e.setTextColor(INK);e.setHintTextColor(0xFF9CA89E);e.setPadding(dp(13),dp(11),dp(13),dp(11));e.setTextSize(15);e.setMinHeight(dp(50));GradientDrawable bg=shape(0xFFF6F8F3);bg.setStroke(dp(1),0xFFDCE5D7);e.setBackground(bg);}
@@ -77,7 +77,10 @@ public class MainActivity extends Activity {
   TextView privacy=text("เก็บไว้ในเครื่องคุณ  ·  อ่านและทบทวนแบบออฟไลน์ได้",10,0xFF93A08D);privacy.setGravity(Gravity.CENTER);root.addView(privacy);
   search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence x,int a,int c,int f){}public void onTextChanged(CharSequence x,int a,int before,int count){query=x.toString();render();}public void afterTextChanged(Editable e){}});render();
  }
- void menu(){new AlertDialog.Builder(this).setTitle("Pharmnote "+BuildConfig.VERSION_NAME).setItems(new String[]{"ตรวจสอบอัปเดต","ตั้งค่าแหล่งอัปเดต GitHub","ส่งออกข้อมูลสำรอง"},(d,which)->{if(which==0)UpdateChecker.check(this,true);if(which==1)UpdateChecker.configure(this);if(which==2)exportBackup();}).show();}
+ void menu(){CardMenu.show(this,"Pharmnote "+BuildConfig.VERSION_NAME,"คลังความรู้ส่วนตัวของคุณ",
+  new CardMenu.Item("update",CodeIcon.Kind.UPDATE,"ตรวจสอบอัปเดต","ดาวน์โหลดรุ่นใหม่และเก็บข้อมูลเดิม",()->UpdateChecker.check(this,true)),
+  new CardMenu.Item("settings",CodeIcon.Kind.SETTINGS,"ตั้งค่าแหล่งอัปเดต","repository ที่เผยแพร่ APK",()->UpdateChecker.configure(this)),
+  new CardMenu.Item("backup",CodeIcon.Kind.EXPORT,"สำรองข้อมูล","ส่งออก PDF และสรุปทั้งหมดเป็น ZIP",this::exportBackup));}
  void render(){
   list.removeAllViews();int count=0;
   for(JSONObject d:docs){
@@ -105,7 +108,7 @@ public class MainActivity extends Activity {
   EditText org=field(form,"องค์กร / แหล่งที่มา",editing?existing.optString("org"):"",false);org.setHint("เช่น NCCN, สมาคมวิชาชีพ");
   EditText year=field(form,"ปีที่เผยแพร่",editing?existing.optString("year"):"",false);year.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);year.setHint("เช่น 2026 หรือ 2569");
   gap(form,12);TextView catLabel=text("หมวดหมู่โรค",12,GREEN);catLabel.setTypeface(null,1);form.addView(catLabel);String[] chosen={editing?existing.optString("category",CategoryCatalog.OTHER):CategoryCatalog.ALL.equals(filter)?CategoryCatalog.OTHER:filter};
-  final Button[] category=new Button[1];category[0]=button(chosen[0]+"  ▾",()->{((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(category[0].getWindowToken(),0);chooseCategory(chosen[0],false,value->{chosen[0]=value;category[0].setText(value+"  ▾");});});category[0].setGravity(Gravity.START|Gravity.CENTER_VERTICAL);form.addView(category[0],new LinearLayout.LayoutParams(-1,dp(52)));gap(form,8);form.addView(text("ค้นหาหมวดหรือเพิ่มหมวดเฉพาะของคุณได้",11,0xFF93A08D));
+  final Button[] category=new Button[1];category[0]=button(chosen[0]+"  ▾",()->{((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(category[0].getWindowToken(),0);chooseCategory(chosen[0],false,value->{chosen[0]=value;category[0].setText(value);});});category[0].setGravity(Gravity.START|Gravity.CENTER_VERTICAL);form.addView(category[0],new LinearLayout.LayoutParams(-1,dp(52)));gap(form,8);form.addView(text("ค้นหาหมวดหรือเพิ่มหมวดเฉพาะของคุณได้",11,0xFF93A08D));
   ScrollView scroll=new ScrollView(this);scroll.setFillViewport(false);scroll.addView(form);
   AlertDialog dialog=new AlertDialog.Builder(this).setTitle(editing?"ข้อมูล Guideline":"เพิ่ม Guideline ใหม่").setView(scroll).setNegativeButton("ยกเลิก",(a,b)->{if(!editing)importedFile.delete();}).setPositiveButton("บันทึก",null).create();dialog.setOnCancelListener(a->{if(!editing)importedFile.delete();});
   dialog.setOnShowListener(a->{dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);dialog.getButton(-1).setOnClickListener(v->{if(title.getText().toString().trim().isEmpty()){title.setError("กรุณาระบุชื่อ Guideline");return;}try{
@@ -129,7 +132,12 @@ public class MainActivity extends Activity {
   toast("ใช้สองนิ้วซูม แตะสองครั้งเพื่อขยาย และลากเพื่อเลื่อน");
  }
  void goToPage(){if(pdfView==null||pdfView.count()==0)return;EditText field=new EditText(this);field.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);field.setHint("1–"+pdfView.count());fieldStyle(field);LinearLayout box=column();box.setPadding(dp(20),dp(10),dp(20),0);box.addView(field);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("ไปยังหน้า").setView(box).setNegativeButton("ยกเลิก",null).setPositiveButton("เปิด",null).create();dialog.setOnShowListener(a->dialog.getButton(-1).setOnClickListener(v->{try{int target=Integer.parseInt(field.getText().toString());if(target<1||target>pdfView.count())throw new IllegalArgumentException();pdfView.setPage(target-1);hideKeyboard();dialog.dismiss();}catch(Exception e){field.setError("ใส่เลขหน้า 1–"+pdfView.count());}}));dialog.show();}
- void readerOptions(){new AlertDialog.Builder(this).setTitle("อ่าน Guideline").setItems(new String[]{"อ่านเต็มจอ","หมุนแนวนอน","หมุนแนวตั้ง","เปิดด้วยแอป PDF อื่น","ลบเอกสาร"},(a,i)->{if(i==0)setReaderFullscreen(true);if(i==1)setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);if(i==2)setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);if(i==3)externalPdf();if(i==4)deleteActive();}).show();}
+ void readerOptions(){CardMenu.show(this,"เครื่องมืออ่าน PDF","ปรับพื้นที่อ่านและแนวหน้าจอ",
+  new CardMenu.Item("full",CodeIcon.Kind.FULLSCREEN,"อ่านเต็มจอ","ใช้พื้นที่ทั้งหมดกับหน้าเอกสาร",()->setReaderFullscreen(true)),
+  new CardMenu.Item("landscape",CodeIcon.Kind.ROTATE,"หมุนแนวนอน","เหมาะกับ guideline หน้ากว้าง",()->setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE)),
+  new CardMenu.Item("portrait",CodeIcon.Kind.ROTATE,"หมุนแนวตั้ง","กลับมาอ่านในแนวตั้ง",()->setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT)),
+  new CardMenu.Item("external",CodeIcon.Kind.READ,"เปิดด้วยแอป PDF อื่น","เลือกแอปที่ติดตั้งในมือถือ",this::externalPdf),
+  new CardMenu.Item("delete",CodeIcon.Kind.DELETE,"ลบเอกสาร","ลบ PDF และสรุปของเอกสารนี้",this::deleteActive));}
  void deleteActive(){JSONObject document=active;new AlertDialog.Builder(this).setTitle("ลบ PDF และสรุปทั้งหมด?").setMessage("การลบนี้ย้อนกลับไม่ได้").setNegativeButton("ยกเลิก",null).setPositiveButton("ลบ",(a,b)->{int pos=docs.indexOf(document);docs.remove(document);if(persist()){home();new File(getFilesDir(),document.optString("id")+".pdf").delete();}else docs.add(pos,document);}).show();}
  void setReaderFullscreen(boolean full){readerFullscreen=full;int visible=full?View.GONE:View.VISIBLE;for(View v:new View[]{readerHeading,readerModes,readerZoom,readerFooter})if(v!=null)v.setVisibility(visible);if(fullExit!=null)fullExit.setVisibility(full?View.VISIBLE:View.GONE);if(root!=null)root.setPadding(full?0:dp(20),full?0:dp(12),full?0:dp(20),full?0:dp(8));if(full){getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);}else{getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);getWindow().getDecorView().setSystemUiVisibility(0);}}
  @Override public void onConfigurationChanged(android.content.res.Configuration config){super.onConfigurationChanged(config);if(pdfView!=null&&config.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE)setReaderFullscreen(true);}
