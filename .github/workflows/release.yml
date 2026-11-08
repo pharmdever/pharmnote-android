@@ -11,7 +11,10 @@ concurrency:
   group: pharmnote-release
   cancel-in-progress: false
 jobs:
+  qa:
+    uses: ./.github/workflows/native-qa.yml
   release:
+    needs: qa
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

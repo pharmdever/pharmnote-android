@@ -1,0 +1,60 @@
+name: Android reader QA
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reader:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Unit tests and Android reader smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: gradle --no-daemon :app:testDebugUnitTest :app:connectedDebugAndroidTest
+      - name: Collect native screenshots
+        if: always()
+        run: |
+          mkdir -p native-qa
+          for name in qa-reader.png qa-landscape.png qa-summary.png; do
+            adb exec-out run-as com.pharmnote.study.debug cat "files/$name" > "native-qa/$name" || true
+          done
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          for p in Path('native-qa').glob('*.png'):
+              b = p.read_bytes()
+              if b.startswith(b'\x89PNG'):
+                  encoded = base64.b64encode(b).decode()
+                  for i in range(0, len(encoded), 3000):
+                      print('PHARMNOTE_SCREENSHOT_' + p.stem + '_PART_' + str(i // 3000) + ':' + encoded[i:i+3000])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-reader-qa
+          path: |
+            native-qa/
+            app/build/reports/tests/
+            app/build/reports/androidTests/
